@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.0"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        #app{
+            text-align: center;
+        }
+    </style>
+    <title>Document</title>
+</head>
+<body>
+    <div id="app">
+        <h2>{{getTime}}</h2>
+       <div> 
+           <button  @click="onStop">STOP</button>
+           <button  @click="onStart">START</button>
+       </div>
+    </div>
+
+    <script>
+        let id = null;
+        const app = new Vue({
+            el:"#app",
+            data:{
+                
+                time:null
+            },
+            computed:{
+                getTime(){
+                    return this.time ? this.time : 'Ожидаем данные!'
+                }
+            },
+            methods:{
+                fetchData(){
+                    axios.get(`http://192.168.56.101:9090/api/v1/query?query=go_memstats_alloc_bytes&_=${Date.now()}`)
+                        .then( ({status, request: { responseText }}) => { 
+                            
+                               if(status == 200){
+                                    let {data:{result:[{value:[ time ]}]}} = JSON.parse(responseText)
+
+                                    this.time = time
+                               }
+                                    
+                                    
+                            })
+                        .catch( (error) => {
+                            
+                            console.log(error);
+                        })
+                        
+                },
+                onStop(){
+                    clearInterval(id)
+                },
+                onStart(){
+                    id = setInterval(() => {
+                        this.fetchData()
+                    },1000)
+                }
+            },
+            created(){
+                id = setInterval(() => {
+                    this.fetchData()
+                },1000)
+                
+
+            }
+
+        })
+        
+
+    </script>
+</body>
+</html>
